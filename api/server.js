@@ -1,0 +1,68 @@
+// server configs
+const express = require("express");
+const app = express();
+const db = require("./config/db");
+const routes = require("./routes");
+const { User } = require("./models");
+const session = require("express-session");
+const cookieParser = require("cookie-parser");
+const passport = require("passport");
+const LocalStrategy = require("passport-local").Strategy;
+//para pintar los eerores del backend
+const volleyball = require("volleyball");
+
+//midllewars
+app.use(volleyball);
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(session({secret: 'osmdb'}));
+app.use(passport.initialize());
+app.use(passport.session());
+
+// -----passport
+
+passport.use(
+  new LocalStrategy(
+    {
+      usernameField: "email",
+      passwordField: "password"
+    },
+    function (email, password, done) {
+      User.findOne({ where: { email } })
+    .then((user) => {
+        if (!user) {
+          return done(null,false);
+        }
+        user.hasHook(password, user.salt)
+        .then((hash)=>{
+            if(hash!==user.password){
+                return done(null,false)
+            }
+            return done(null, user);
+        });    
+      })
+      .catch(done);
+    }
+  )
+);
+passport.serializeUser(function(user, done) {
+    done(null, user.id);
+  });
+  
+  passport.deserializeUser(function(id, done) {
+    User.findById(id)
+    .then((user)=>{
+        done(null, user);
+    })
+    .catch(done);
+  });
+
+
+// -----
+app.use("/api", routes);
+db.sync({ force: false }).then(() => {
+  app.listen(3001, () => {
+    console.log("listening on port 3001");
+  });
+});
