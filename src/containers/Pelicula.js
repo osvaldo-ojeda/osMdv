@@ -8,15 +8,13 @@ import { getPelicula } from "../store/peliculas";
 
 const Pelicula = () => {
   const dispatch = useDispatch();
-
   const param = useParams();
-
   const search = param.id;
 
-  console.log("soy un param", search);
   useEffect(() => {
     dispatch(getPelicula(search));
-  }, [dispatch]);
+  }, [dispatch,search]);
+
   const pelicula = useSelector((state) => state.peliculas);
 
   return (

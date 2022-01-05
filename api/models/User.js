@@ -28,16 +28,32 @@ User.init(
     isAdmin: {
       type: Sequelize.BOOLEAN,
       defaultValue: false
-    },
-    isSuperAdmin: {
-      type: Sequelize.BOOLEAN,
-      defaultValue: false
     }
   },
   {
-      sequelize:db,
-      modelName: 'user'
+    sequelize: db,
+    modelName: "user"
   }
 );
+User.prototype.hash=(pass,salt)=>{
+  return bcrypt.hash(pass,salt);
+}
+
+
+User.beforeCreate((user)=>{
+  return bcrypt
+  .genSalt(10)
+  .then((salt)=>{
+    user.salt=salt;
+    return user.hash(user.pass, salt);
+  })
+  .then((hash)=>{
+    user.pass=hash;
+  })
+})
+
+
+
 
 module.exports = User;
+
